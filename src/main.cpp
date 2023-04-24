@@ -14,15 +14,8 @@ static void SKSEMessageHandler(SKSE::MessagingInterface::Message* message)
 	switch (message->type) {
 	case SKSE::MessagingInterface::kDataLoaded:
 		MenuOpenCloseEventHandler::Register();
+		logger::info("Registering oxygen meter menu.");
 		oxygenMenu::Register();
-		break;
-
-	case SKSE::MessagingInterface::kNewGame:
-		oxygenMenu::Show();
-		break;
-
-	case SKSE::MessagingInterface::kPostLoadGame:
-		oxygenMenu::Show();
 		break;
 	}
 }
@@ -79,9 +72,32 @@ extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Query(const SKSE::QueryInterface* a
 }
 #endif
 
+void InitializeLog()
+{
+	auto path = logger::log_directory();
+	if (!path) {
+		stl::report_and_fail("Failed to find standard logging directory"sv);
+	}
+
+	*path /= fmt::format(FMT_STRING("{}.log"), Version::PROJECT);
+	auto sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(path->string(), true);
+
+	auto log = std::make_shared<spdlog::logger>("global log"s, std::move(sink));
+
+	log->set_level(spdlog::level::info);
+	log->flush_on(spdlog::level::info);
+
+	spdlog::set_default_logger(std::move(log));
+	spdlog::set_pattern("[%l] %v"s);
+
+	logger::info(FMT_STRING("{} v{}"), Version::PROJECT, Version::NAME);
+}
+
 extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_skse)
 {
-	logger::info("loaded plugin");
+	InitializeLog();
+
+	logger::info("Game version : {}", a_skse->RuntimeVersion().string());
 
 	SKSE::Init(a_skse);
 

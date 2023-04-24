@@ -29,6 +29,7 @@ public:
 		kVisible
 	};
 	MenuVisibilityMode _menuVisibilityMode = MenuVisibilityMode::kVisible;
+	static inline bool want_visible{ false };
 
 	static void SetMenuVisibilityMode(MenuVisibilityMode a_mode);
 	bool IsOpen() const;

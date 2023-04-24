@@ -1,4 +1,5 @@
 #pragma once
+#include <chrono>
 #include "oxyMeter.h"
 #include "Settings.h"
 
@@ -62,8 +63,7 @@ void oxygenMenu::Register()
 	auto ui = RE::UI::GetSingleton();
 	if (ui) {
 		ui->Register(MENU_NAME, Creator);
-
-		oxygenMenu::Show();
+		logger::info("Menu Registered.");
 	}
 }
 
@@ -104,6 +104,8 @@ void oxygenMenu::Update()
 			ApplyColour(oxygenMeter);
 			oxygenMeter->uiMovie->SetVariable("main.MenuEnabled", true);
 		}
+
+		SetMenuVisibilityMode(MenuVisibilityMode::kVisible);
 		
 		const RE::GFxValue currentBreathAmount = *fillPct;
 
@@ -128,12 +130,23 @@ void oxygenMenu::Update()
 		}
 
 	} else {
+		static std::chrono::time_point<std::chrono::steady_clock> start;
+		static bool fading{ false };
+
 		if (holding_breath || drowning) {
 			holding_breath = false;
 			drowning = false;
 			const RE::GFxValue refill = 100;
 			oxygenMeter->uiMovie->Invoke("main.updateMeterPercent", nullptr, &refill, 1);
 			oxygenMeter->uiMovie->Invoke("main.doFadeOut", nullptr, nullptr, 0);
+			start = std::chrono::steady_clock::now();
+			fading = true;
+		}
+
+		if (fading && ((std::chrono::steady_clock::now() - start) > 1s || !want_visible))
+		{
+			SetMenuVisibilityMode(MenuVisibilityMode::kHidden);
+			fading = false;
 		}
 	}
 
@@ -145,8 +158,10 @@ void oxygenMenu::ApplyLayout(RE::GPtr<RE::IMenu> oxygenMeter)
 	if (!oxygenMeter || !oxygenMeter->uiMovie)
 		return;
 
-	const RE::GFxValue widget_xpos = Settings::GetSingleton()->widget_xpos;
-	const RE::GFxValue widget_ypos = Settings::GetSingleton()->widget_ypos;
+	auto def = oxygenMeter->uiMovie->GetMovieDef();
+
+	const RE::GFxValue widget_xpos = (Settings::GetSingleton()->widget_xpos / 100.0) * def->GetWidth();
+	const RE::GFxValue widget_ypos = (Settings::GetSingleton()->widget_ypos / 100.0) * def->GetHeight();
 	const RE::GFxValue widget_rotation = Settings::GetSingleton()->widget_rotation;
 	const RE::GFxValue widget_xscale = Settings::GetSingleton()->widget_xscale;
 	const RE::GFxValue widget_yscale = Settings::GetSingleton()->widget_yscale;
@@ -195,11 +210,14 @@ bool oxygenMenu::IsOpen() const
 
 void oxygenMenu::OnOpen() 
 {
+	// The advance movie process will handle showing the meter when appropriate
+	oxygenMenu::SetMenuVisibilityMode(oxygenMenu::MenuVisibilityMode::kHidden);
 	_bIsOpen = true;
 }
 
 void oxygenMenu::OnClose() 
 {
+	want_visible = false;
 	_bIsOpen = false;
 }
 
@@ -207,20 +225,23 @@ void oxygenMenu::SetMenuVisibilityMode(MenuVisibilityMode a_mode)
 {
 	auto menu = GetOxygenMenu();
 	if (menu) {
-		menu->_menuVisibilityMode = a_mode;
-
 		auto _view = menu->uiMovie;
 
 		if (_view) {
-			switch (menu->_menuVisibilityMode) {
+			switch (a_mode) {
 			case MenuVisibilityMode::kHidden:
-				_view->SetVisible(false);
+				if (menu->_menuVisibilityMode == MenuVisibilityMode::kVisible) {
+					_view->SetVisible(false);
+					menu->_menuVisibilityMode = a_mode;
+				}
 				break;
 
-			case MenuVisibilityMode::kVisible:{
-				_view->SetVisible(true);
-				break;
+			case MenuVisibilityMode::kVisible:
+				if (menu->_menuVisibilityMode == MenuVisibilityMode::kHidden && want_visible) {
+					_view->SetVisible(true);
+					menu->_menuVisibilityMode = a_mode;
 				}
+				break;
 			}
 		}
 	}
