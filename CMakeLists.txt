@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-set(NAME "po3_oxygenMeter2" CACHE STRING "")
+set(NAME "oxygenMeter2" CACHE STRING "")
 set(VERSION 1.0.4 CACHE STRING "")
 set(AE_VERSION 1)
 
@@ -11,18 +11,18 @@ option(BUILD_SKYRIMAE "Build for Skyrim AE" OFF)
 # ---- Cache build vars ----
 
 macro(set_from_environment VARIABLE)
-	if (NOT DEFINED ${VARIABLE} AND DEFINED ENV{${VARIABLE}})
+	if(NOT DEFINED ${VARIABLE} AND DEFINED ENV{${VARIABLE}})
 		set(${VARIABLE} $ENV{${VARIABLE}})
-	endif ()
+	endif()
 endmacro()
 
 macro(find_commonlib_path)
-	if (CommonLibName AND NOT ${CommonLibName} STREQUAL "")
+	if(CommonLibName AND NOT ${CommonLibName} STREQUAL "")
 		# Check extern
 		find_path(CommonLibPath
 		include/REL/Relocation.h
 		PATHS extern/${CommonLibName})
-		if (${CommonLibPath} STREQUAL "CommonLibPath-NOTFOUND")
+		if(${CommonLibPath} STREQUAL "CommonLibPath-NOTFOUND")
 			#Check path
 			set_from_environment(${CommonLibName}Path)
 			set(CommonLibPath ${${CommonLibName}Path})
@@ -51,15 +51,15 @@ message(
 	"Building ${NAME} ${VERSION} for ${SkyrimVersion} at ${SkyrimPath} with ${CommonLibName} at ${CommonLibPath}."
 )
 
-if (DEFINED VCPKG_ROOT)
+if(DEFINED VCPKG_ROOT)
 	set(CMAKE_TOOLCHAIN_FILE "${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
 	set(VCPKG_TARGET_TRIPLET "x64-windows-static" CACHE STRING "")
-else ()
+else()
 	message(
 		WARNING
 		"Variable VCPKG_ROOT is not set. Continuing without vcpkg."
 	)
-endif ()
+endif()
 
 set(Boost_USE_STATIC_RUNTIME OFF CACHE BOOL "")
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" CACHE STRING "")
@@ -89,7 +89,7 @@ configure_file(
 if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
 	message(
 		FATAL_ERROR
-			"In-source builds not allowed. Please make a new directory (called a build directory) and run CMake from there."
+			"In-source builds not allowed. Please make a new directory(called a build directory) and run CMake from there."
 	)
 endif()
 
@@ -99,23 +99,22 @@ add_compile_definitions(
 	SKSE_SUPPORT_XBYAK
 )
 
-if (MSVC)
-	if (NOT ${CMAKE_GENERATOR} STREQUAL "Ninja")
+if(MSVC)
+	if(NOT ${CMAKE_GENERATOR} STREQUAL "Ninja")
 		add_compile_options(
 			/MP	# Build with Multiple Processes
 		)
-	endif ()
-endif ()
+	endif()
+endif()
 
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_DEBUG OFF)
 
 set(Boost_USE_STATIC_LIBS ON)
 # ---- Dependencies ----
-
-if (DEFINED CommonLibPath AND NOT ${CommonLibPath} STREQUAL "" AND IS_DIRECTORY ${CommonLibPath})
+if(DEFINED CommonLibPath AND NOT ${CommonLibPath} STREQUAL "" AND IS_DIRECTORY ${CommonLibPath})
 	add_subdirectory(${CommonLibPath} ${CommonLibName})
-else ()
+else()
 	message(
 		FATAL_ERROR
 		"Variable ${CommonLibName}Path is not set or in extern/."
@@ -124,6 +123,8 @@ endif()
 
 find_package(spdlog REQUIRED CONFIG)
 find_package(xbyak REQUIRED CONFIG)
+find_path(SRELL_INCLUDE_DIRS "srell.hpp")
+find_path(CLIB_UTIL_INCLUDE_DIRS "ClibUtil/utils.hpp")
 
 find_path(SIMPLEINI_INCLUDE_DIRS "ClibUtil/utils.hpp")
 
@@ -194,7 +195,7 @@ target_precompile_headers(
 		src/PCH.h
 )
 
-if (MSVC)
+if(MSVC)
 	target_compile_options(
 		${PROJECT_NAME}
 		PRIVATE
@@ -217,22 +218,42 @@ if (MSVC)
 			"$<$<CONFIG:DEBUG>:/INCREMENTAL;/OPT:NOREF;/OPT:NOICF>"
 			"$<$<CONFIG:RELEASE>:/INCREMENTAL:NO;/OPT:REF;/OPT:ICF;/DEBUG:FULL>"
 	)
-endif ()
+endif()
 
 # ---- Post build ----
 
-if (COPY_BUILD)
-	if (DEFINED SkyrimPath)
+if(COPY_BUILD)
+	if(DEFINED SkyrimPath)
 		add_custom_command(
 			TARGET ${PROJECT_NAME}
 			POST_BUILD
 			COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> ${SkyrimPath}/SKSE/Plugins/
 			COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_PDB_FILE:${PROJECT_NAME}> ${SkyrimPath}/SKSE/Plugins/
 		)
-	else ()
+	else()
 		message(
 			WARNING
 			"Variable ${SkyrimPath} is not defined. Skipping post-build copy command."
 		)
-	endif ()
-endif ()
+	endif()
+endif()
+
+# https://gitlab.kitware.com/cmake/cmake/-/issues/24922#note_1371990
+if(MSVC_VERSION GREATER_EQUAL 1936 AND MSVC_IDE) # 17.6+
+	# When using /std:c++latest, "Build ISO C++23 Standard Library Modules" defaults to "Yes".
+	# Default to "No" instead.
+	#
+	# As of CMake 3.26.4, there isn't a way to control this property
+	# (https://gitlab.kitware.com/cmake/cmake/-/issues/24922),
+	# We'll use the MSBuild project system instead
+	# (https://learn.microsoft.com/en-us/cpp/build/reference/vcxproj-file-structure)
+	file(CONFIGURE OUTPUT "${CMAKE_BINARY_DIR}/Directory.Build.props" CONTENT [==[
+<Project>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <BuildStlModules>false</BuildStlModules>
+    </ClCompile>
+  </ItemDefinitionGroup>
+</Project>
+]==] @ONLY)
+endif()

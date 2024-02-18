@@ -2,11 +2,11 @@
 #include "RE/G/GFxValue.h"
 #include "RE/G/GPtr.h"
 
-class oxygenMenu : RE::IMenu
+class oxygenMenu : public RE::IMenu
 {
 public:
-    static constexpr const char* MENU_PATH = "oxygenMeter";
-	static constexpr const char* MENU_NAME = "oxygenMeter";
+    static constexpr const char* MENU_PATH = "oxygenMeter2";
+	static constexpr const char* MENU_NAME = "oxygenMeter2";
 
     oxygenMenu();
 
@@ -15,14 +15,31 @@ public:
 	static void Hide();
 	static void Update();
 	static void ApplyLayout(RE::GPtr<RE::IMenu> oxygenMeter);
-	static void ToggleVisibility(bool mode);
+	static void ApplyColour(RE::GPtr<RE::IMenu> oxygenMeter);
+	static RE::GPtr<oxygenMenu> GetOxygenMenu();
 
     static RE::stl::owner<RE::IMenu*> Creator() { return new oxygenMenu(); }
 
 	void AdvanceMovie(float a_interval, std::uint32_t a_currentTime) override;
+	RE::UI_MESSAGE_RESULTS ProcessMessage(RE::UIMessage& a_message) override;
+	
+	enum class MenuVisibilityMode : uint8_t
+	{
+		kHidden,
+		kVisible
+	};
+	MenuVisibilityMode _menuVisibilityMode = MenuVisibilityMode::kVisible;
+	static inline bool want_visible{ false };
+
+	static void SetMenuVisibilityMode(MenuVisibilityMode a_mode);
+	bool IsOpen() const;
+	void OnOpen();
+	void OnClose();
+
 private:
 	static inline bool holding_breath{ false };
 	static inline bool drowning{ false };
+	bool _bIsOpen = false;
 
 private:
 	class Logger : public RE::GFxLog
