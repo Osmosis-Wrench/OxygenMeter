@@ -21,8 +21,8 @@ SKSE plugin that repurposes the enchantment charge meter for an oxygen meter whe
 
 ## Building
 ```
-git clone https://github.com/powerof3/OxygenMeter.git
-cd OxygenMeter
+git clone https://github.com/Osmosis-Wrench/OxygenMeter2.git
+cd OxygenMeter2
 cmake -B build -S .
 ```
 ## License
