@@ -20,7 +20,6 @@ void MenuOpenCloseEventHandler::Register()
 
 RE::BSEventNotifyControl MenuOpenCloseEventHandler::ProcessEvent(const RE::MenuOpenCloseEvent* a_event, RE::BSTEventSource<RE::MenuOpenCloseEvent>*)
 {
-<<<<<<< HEAD
 	// from ersh TrueHud pretty much verbatim
 	if (a_event)
 		logger::debug("Received RE::MenuOpenCloseEvent for {} with opening {}"sv, a_event->menuName, a_event->opening);
@@ -29,34 +28,10 @@ RE::BSEventNotifyControl MenuOpenCloseEventHandler::ProcessEvent(const RE::MenuO
 	// On HUD menu open/close - open/close the plugin's HUD menu
 	if (a_event && (a_event->menuName == RE::HUDMenu::MENU_NAME || a_event->menuName == "TrueHUD"sv)) {
 		if (a_event->opening) {
-=======
-	auto ui = RE::UI::GetSingleton();
-	if (a_event) {
-		logger::info("Menu: {} :: {}",a_event->menuName.c_str(), a_event->opening ? "opening" : "closing");
-		if (a_event->menuName == RE::HUDMenu::MENU_NAME) {
-			if (a_event->opening) {
-				oxygenMenu::Show();
-			} else {
-				oxygenMenu::Hide();
-			}
-		} else if (a_event->menuName == RE::RaceSexMenu::MENU_NAME && !a_event->opening) {
-			oxygenMenu::Show();
-			logger::info("showing menu when racemenu closes");
-		} else if (a_event->menuName == RE::LoadingMenu::MENU_NAME && !a_event->opening) {
->>>>>>> master
 			oxygenMenu::Show();
 		} else {
 			oxygenMenu::Hide();
 		}
-<<<<<<< HEAD
-=======
-		if (a_event->menuName == RE::ContainerMenu::MENU_NAME && !a_event->opening && !ui->IsMenuOpen("PluginExplorerMenu")) {
-			oxygenMenu::Show();
-		}
-		if (a_event->menuName == RE::JournalMenu::MENU_NAME) {
-			Settings::GetSingleton()->Load();
-		}
->>>>>>> master
 	}
 
 	// Hide the widgets when a menu is open
