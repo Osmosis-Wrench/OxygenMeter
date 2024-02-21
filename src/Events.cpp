@@ -22,7 +22,7 @@ RE::BSEventNotifyControl MenuOpenCloseEventHandler::ProcessEvent(const RE::MenuO
 {
 	// from ersh TrueHud pretty much verbatim
 	if (a_event)
-		logger::debug("Received RE::MenuOpenCloseEvent for {} with opening {}"sv, a_event->menuName, a_event->opening);
+		//logger::debug("Received RE::MenuOpenCloseEvent for {} with opening {}"sv, a_event->menuName, a_event->opening);
 
 	// On HUD menu open/close - open/close the plugin's HUD menu
 	if (a_event && (a_event->menuName == RE::HUDMenu::MENU_NAME || a_event->menuName == "TrueHUD"sv)) {
