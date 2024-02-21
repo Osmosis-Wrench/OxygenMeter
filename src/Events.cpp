@@ -15,7 +15,7 @@ void MenuOpenCloseEventHandler::Register()
 {
 	auto ui = RE::UI::GetSingleton();
 	ui->AddEventSink<RE::MenuOpenCloseEvent>(GetSingleton());
-	//logger::info("Registered {}"sv, typeid(RE::MenuOpenCloseEvent).name());
+	logger::info("Registered {}"sv, typeid(RE::MenuOpenCloseEvent).name());
 }
 
 RE::BSEventNotifyControl MenuOpenCloseEventHandler::ProcessEvent(const RE::MenuOpenCloseEvent* a_event, RE::BSTEventSource<RE::MenuOpenCloseEvent>*)
