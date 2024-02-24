@@ -15,14 +15,14 @@ void MenuOpenCloseEventHandler::Register()
 {
 	auto ui = RE::UI::GetSingleton();
 	ui->AddEventSink<RE::MenuOpenCloseEvent>(GetSingleton());
-	//logger::info("Registered {}"sv, typeid(RE::MenuOpenCloseEvent).name());
+	logger::info("Registered {}"sv, typeid(RE::MenuOpenCloseEvent).name());
 }
 
 RE::BSEventNotifyControl MenuOpenCloseEventHandler::ProcessEvent(const RE::MenuOpenCloseEvent* a_event, RE::BSTEventSource<RE::MenuOpenCloseEvent>*)
 {
 	// from ersh TrueHud pretty much verbatim
 	if (a_event)
-		//logger::debug("Received RE::MenuOpenCloseEvent for {} with opening {}"sv, a_event->menuName, a_event->opening);
+		logger::debug("Received RE::MenuOpenCloseEvent for {} with opening {}"sv, a_event->menuName.c_str(), a_event->opening);
 
 	// On HUD menu open/close - open/close the plugin's HUD menu
 	if (a_event && (a_event->menuName == RE::HUDMenu::MENU_NAME || a_event->menuName == "TrueHUD"sv)) {
