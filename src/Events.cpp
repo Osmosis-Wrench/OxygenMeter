@@ -20,18 +20,24 @@ void MenuOpenCloseEventHandler::Register()
 
 RE::BSEventNotifyControl MenuOpenCloseEventHandler::ProcessEvent(const RE::MenuOpenCloseEvent* a_event, RE::BSTEventSource<RE::MenuOpenCloseEvent>*)
 {
-	// from ersh TrueHud pretty much verbatim
+
 	if (a_event)
 		logger::debug("Received RE::MenuOpenCloseEvent for {} with opening {}"sv, a_event->menuName.c_str(), a_event->opening);
 
 	// On HUD menu open/close - open/close the plugin's HUD menu
-	if (a_event && (a_event->menuName == RE::HUDMenu::MENU_NAME || a_event->menuName == "TrueHUD"sv)) {
-		if (a_event->opening) {
+	if (a_event) {
+		if (a_event->menuName == RE::HUDMenu::MENU_NAME || a_event->menuName == "TrueHUD"sv) {
+			if (a_event->opening) {
+				oxygenMenu::Show();
+			} else {
+				oxygenMenu::Hide();
+			}
+		}
+		if (a_event->menuName == RE::LoadingMenu::MENU_NAME && !a_event->opening) {
 			oxygenMenu::Show();
-		} else {
-			oxygenMenu::Hide();
 		}
 	}
+
 
 	// Hide the widgets when a menu is open
 	auto controlMap = RE::ControlMap::GetSingleton();
@@ -47,6 +53,7 @@ RE::BSEventNotifyControl MenuOpenCloseEventHandler::ProcessEvent(const RE::MenuO
 		} else {
 			oxygenMenu::want_visible = false;
 		}
+		logger::debug("OxygenMenu::want_Visible = {}", oxygenMenu::want_visible);
 	}
 
 	return RE::BSEventNotifyControl::kContinue;
